@@ -1,0 +1,86 @@
+# Name the workflow Multi-Job Workflow
+name: Multi-Job Workflow
+
+#Configure the workflow to trigger on push events
+on: [push]
+
+#Define four jobs
+jobs:
+  build-ubuntu:
+    # Use runs-on to configure the runner for each job
+    runs-on: ubuntu-latest
+    steps:
+      # Checkout the code
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Set up Go environment
+      - name: Set up Go
+        uses: actions/setup-go@v5.5
+        with:
+          go-version: "1.20"
+
+      # Compile the Go file
+      - name: Build Go binary
+        run: go build -o main main.go
+
+      # Run the compiled binary
+      - name: Run binary
+        run: ./main
+
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5.5.0
+        with:
+          go-version: "1.20"
+
+      # For the windows job, use main.exe instead of main
+      - name: Build Go binary
+        run: go build -o main.exe main.go
+
+      # For the windows job, use .\main.exe instead of ./main
+      - name: Run binary
+        run: .\main.exe
+
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5.5.0
+        with:
+          go-version: "1.20"
+
+      - name: Build Go binary
+        run: go build -o main main.go
+
+      - name: Run binary
+        run: ./main
+
+  cross-compile:
+    runs-on: ubuntu-latest
+    # cross-compile (runs on ubuntu-latest and depends on the first three)
+    needs: [ubuntu, windows, macos]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5.5.0
+        with:
+          go-version: "1.20"
+
+      # Use a multiline run command to build binaries for each platform
+      - name: Cross-compile for all platforms
+        run: |
+          echo "Cross compiling for all platforms:"
+          GOOS=linux GOARCH=amd64 go build -o main-linux main.go
+          GOOS=windows GOARCH=amd64 go build -o main-windows.exe main.go
+          GOOS=darwin GOARCH=amd64 go build -o main-macos-intel main.go
