@@ -1,88 +1,93 @@
 
-# Name the workflow Multi-Job Workflow
+# Name the workflow shown in the GitHub Actions UI
 name: Multi-Job Workflow
 
-# Configure the workflow to trigger on push events
-on: [push]
+# Define the GitHub events that trigger this workflow
+on: [push]                                   # Run the workflow on every push to the repository
 
+# Define all jobs in this workflow
 jobs:
-  build-ubuntu:
-    # Use runs-on to configure the runner for each job
-    runs-on: ubuntu-latest
+  build-ubuntu:                              # Job ID for the Ubuntu build job
+    # Specify the runner operating system for this job
+    runs-on: ubuntu-latest                   # Use the latest available Ubuntu runner
+    # Define the sequence of steps for this job
     steps:
-      # Checkout the code
-      - name: Checkout code
-        uses: actions/checkout@v4
+      # Checkout the repository source code
+      - name: Checkout code                  # Step name shown in the UI
+        uses: actions/checkout@v4           # Action that checks out the repository
 
-      # Set up Go environment
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: "1.20"
+      # Set up the Go toolchain
+      - name: Set up Go                      # Step name
+        uses: actions/setup-go@v5           # Action that installs Go
+        with:                                # Input parameters for setup-go
+          go-version: "1.20"                # Specify the Go version to install
 
-      # Compile the Go file
-      - name: Build Go binary
-        run: go build -o main main.go
+      # Build the Go application for Linux
+      - name: Build Go binary                # Step name
+        run: go build -o main main.go        # Compile main.go into a binary named "main"
 
-      # Run the compiled binary
-      - name: Run binary
-        run: ./main
+      # Run the compiled Go binary
+      - name: Run binary                    # Step name
+        run: ./main                         # Execute the compiled binary
 
-  build-windows:
-    runs-on: windows-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+  build-windows:                             # Job ID for the Windows build job
+    runs-on: windows-latest                  # Use the latest Windows runner
+    steps:                                  # Define steps for this job
+      - name: Checkout code                 # Step name
+        uses: actions/checkout@v4           # Checkout repository contents
 
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: "1.20"
+      - name: Set up Go                     # Step name
+        uses: actions/setup-go@v5           # Install Go on Windows runner
+        with:                               # Inputs for Go setup
+          go-version: "1.20"               # Specify Go version
 
-      # For the windows job, use main.exe instead of main
-      - name: Build Go binary
-        run: go build -o main.exe main.go
+      # Build the Go application for Windows
+      - name: Build Go binary               # Step name
+        run: go build -o main.exe main.go   # Compile main.go into a Windows executable
 
-      # For the windows job, use .\main.exe instead of ./main
-      - name: Run binary
-        run: .\main.exe
+      # Run the Windows executable
+      - name: Run binary                   # Step name
+        run: .\main.exe                    # Execute the Windows binary
 
-  build-macos:
-    runs-on: macos-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+  build-macos:                              # Job ID for the macOS build job
+    runs-on: macos-latest                  # Use the latest macOS runner
+    steps:                                 # Define steps for this job
+      - name: Checkout code                # Step name
+        uses: actions/checkout@v4          # Checkout repository contents
 
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: "1.20"
+      - name: Set up Go                    # Step name
+        uses: actions/setup-go@v5          # Install Go on macOS runner
+        with:                              # Inputs for setup-go
+          go-version: "1.20"              # Specify Go version
 
-      - name: Build Go binary
-        run: go build -o main main.go
+      # Build the Go application for macOS
+      - name: Build Go binary              # Step name
+        run: go build -o main main.go      # Compile main.go into a macOS binary
 
-      - name: Run binary
-        run: ./main
+      # Run the macOS binary
+      - name: Run binary                  # Step name
+        run: ./main                       # Execute the compiled binary
 
-  cross-compile:
-    runs-on: ubuntu-latest
-    # cross-compile depends on the first three jobs (use the job IDs)
-    needs: [build-ubuntu, build-windows, build-macos]
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+  cross-compile:                           # Job ID for cross-compilation
+    runs-on: ubuntu-latest                # Use Ubuntu runner for cross-compilation
+    # Ensure this job runs only after the previous three jobs succeed
+    needs: [build-ubuntu, build-windows, build-macos]  # Job dependencies
+    steps:                                # Define steps for this job
+      - name: Checkout code               # Step name
+        uses: actions/checkout@v4         # Checkout repository contents
 
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: "1.20"
+      - name: Set up Go                   # Step name
+        uses: actions/setup-go@v5         # Install Go environment
+        with:                             # Inputs for setup-go
+          go-version: "1.20"             # Specify Go version
 
-      # Use a multiline run command to build binaries for each platform
-      - name: Cross-compile for all platforms
-        run: |
-          echo "Cross compiling for all platforms:"
-          GOOS=linux   GOARCH=amd64 go build -o main-linux-amd64     main.go
-          GOOS=windows GOARCH=amd64 go build -o main-windows-amd64.exe main.go
-          GOOS=darwin  GOARCH=amd64 go build -o main-macos-amd64     main.go
-          # Optional: also build Apple Silicon
-          GOOS=darwin  GOARCH=arm64 go build -o main-macos-arm64     main.go
+      # Build binaries for multiple platforms from a single runner
+      - name: Cross-compile for all platforms  # Step name
+        run: |                             # Start a multiline shell script
+          echo "Cross compiling for all platforms:"  # Print status message
+          GOOS=linux   GOARCH=amd64 go build -o main-linux-amd64 main.go      # Build Linux AMD64 binary
+          GOOS=windows GOARCH=amd64 go build -o main-windows-amd64.exe main.go# Build Windows AMD64 binary
+          GOOS=darwin  GOARCH=amd64 go build -o main-macos-amd64 main.go      # Build macOS Intel binary
+          # Optional Apple Silicon build
+          GOOS=darwin  GOARCH=arm64 go build -o main-macos-arm64 main.go      # Build macOS ARM64 binary
+``
